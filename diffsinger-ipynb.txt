@@ -1,0 +1,90 @@
+克隆仓库
+git clone https://github.com/openvpi/MakeDiffSinger.git
+git clone https://github.com/qiuqiao/SOFA.git
+git clone https://github.com/openvpi/SOME.git
+git clone https://github.com/openvpi/DiffSinger.git
+
+安装pytorch
+pip3 install torch torchvision
+安装模块
+pip install tqdm
+安装ffmpeg
+pip install ffmpeg
+或者
+sudo apt install ffmpeg
+
+安装依赖
+pip install -r MakeDiffSinger/acoustic_forced_alignment/requirements.txt
+pip install -r MakeDiffSinger/variance-temp-solution/requirements.txt
+pip install -r SOFA/requirements.txt 
+pip install -r SOME/requirements.txt 
+pip install -r DiffSinger/requirements.txt 
+
+ONNX需要于虚拟环境中使用
+conda create -n ONNX python=3.8 -y
+conda activate ONNX
+pip install -r DiffSinger/requirements-onnx.txt 
+依赖已经安装，不需要conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 cpuonly -c pytorch
+
+
+如果SOME报错，你需要
+python -m pip install "pip<24.1"
+然后
+pip install -r SOME/requirements.txt 
+
+下载文件
+python /workspace/download.py
+
+解压文件
+unzip rmvpe/rmvpe.zip
+unzip sofa_models/SOFA_model_mandarin_byBaiShuo.zip
+unzip vocal_remover/hnsep_240512.zip
+unzip some_models/0119_continuous128_5spk.zip
+unzip vocoders/pc_nsf_hifigan_44.1k_hop512_128bin_2025.02.zip
+
+没有集成whisper/音频处理工具，这意味着想要使用lab自动标注（多语种）需要自己搭建环境
+如果你只有中文/英语/日语lab需求，可以尝试SOFA AI/LyricFA
+如果要使用音频工具（响度匹配/自动切片）请尝试冷月的工具
+
+SOFA AI
+git clone https://github.com/colstone/SOFA_AI.git
+pip install lightning
+pip install -r SOFA_AI/requirements.txt
+python SOFA_AI/sofa_ai.py
+
+
+LyricFA
+git clone https://github.com/wolfgitpr/LyricFA.git
+pip install -r LyricFA/requirements.txt
+pip install rapid_paraformer
+需要从百度网盘下载文件https://pan.baidu.com/share/init?surl=zf8Ta6QxFHY3Z75fHNYKrQ&pwd=6ekq
+python rapid_asr.py --model_config resources/config.yaml --wav_folder wav_folder --lab_folder lab_folder
+python match_lyric.py --lyric_folder lyric --lab_folder lab_folder --json_folder json_folder --asr_rectify True 
+
+
+
+试验版，谨慎使用，运行webui，没有ONNX导出（不要尝试），也没有关于声码器的训练，关于配置文件实际上只能用最原始的文件编辑器
+pip install gradio==5.47.2
+python /workspace/webui2.py
+
+检测GPU
+watch -n 1 nvidia-smi
+
+最好不要在webui中尝试训练，因为无法实时输出，如果继续训练，删除--reset
+预处理
+python scripts/binarize.py --config /workspace/DiffSinger/configs/templates/acoustic.yaml
+python scripts/train.py --config /workspace/DiffSinger/configs/templates/acoustic.yaml --exp_name test --reset
+python scripts/binarize.py --config /workspace/DiffSinger/configs/templates/config_variance.yaml
+python scripts/train.py --config /workspace/DiffSinger/configs/templates/config_variance.yaml --exp_name test2 
+
+
+ONNX导出
+cd /workspace/DiffSinger
+3.若你需要在多说话人训练中指定导出三位歌手qixuan，opencpop，oniku的onnx混合声学模型到自定义文件夹qixuan_acoustic_ONNX中，则可以运行以下代码
+python scripts/export.py acoustic --exp qixuan_acoustic --export_spk qixuan --export_spk opencpop  --export_spk oniku --out qixuan_acoustic_ONNX
+与
+3.若你需要指定导出三位歌手qixuan，opencpop，oniku的混合onnx唱法模型到自定义文件夹qixuan_variance_ONNX中，则可以运行以下代码
+python scripts/export.py variance --exp qixuan_variance --export_spk qixuan --export_spk opencpop  --export_spk oniku --out qixuan_variance_ONNX
+压缩文件并下载
+zip -r /workspace/ONNX.zip /workspace/ONNX/
+
