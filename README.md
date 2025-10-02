@@ -1,0 +1,2 @@
+# diffsinger-webui
+试验版的diffsinger一键运行脚本，附带简易版的webui，适用于全自动流程的diffsinger声库制作
